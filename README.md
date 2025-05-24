@@ -1,2 +1,2 @@
 # Terminators
-Hack with Gujurat team
+Hack with Gujarat team
