@@ -33,7 +33,15 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/PassionOne-Regular.ttf",
+          ]
+        }
+      ],
     ],
     "experiments": {
       "typedRoutes": true
