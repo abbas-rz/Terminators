@@ -4,31 +4,23 @@ import uuid
 import bcrypt
 import csv
 from flask import Flask, request, jsonify
-from flask_cors import CORS # type: ignore
+from flask_cors import CORS
 
-# Google Generative AI
-import google.generativeai as genai  # type: ignore
+import google.generativeai as genai
 
-# 🔑 Google Generative API Key
 key = "AIzaSyCCIXPTw5o3qz6cysKrVZS8WdASNZg398M"
 
-# 📁 JSON file to act as the database
 DB_FILE = 'server.json'
 
-# 📊 CSV cache file for nutrition data
 CSV_FILE = 'nutrition_cache.csv'
 
-# 🔧 Ensure files exist
 if not os.path.exists(DB_FILE):
     with open(DB_FILE, 'w') as f:
         json.dump({"users": {}}, f)
 
 if not os.path.exists(CSV_FILE):
-    # Create CSV file with headers
     with open(CSV_FILE, 'w', newline='') as f:
         writer = csv.writer(f)
-        # Headers correspond to flattened nutrition JSON
-        # We'll store the whole vitamins_minerals dict as JSON string to keep it flexible
         writer.writerow([
             "food_item",
             "serving_weight",
@@ -40,11 +32,9 @@ if not os.path.exists(CSV_FILE):
             "vitamins_minerals_json"
         ])
 
-# 🌱 Flask app setup
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# 🤖 Gemini Nutrition Analyzer Class
 class NutritionAnalyzer:
     def __init__(self, apiKey):
         genai.configure(api_key=apiKey)
@@ -101,10 +91,8 @@ class NutritionAnalyzer:
         except Exception as e:
             return {"error": f"Error getting nutrition information: {str(e)}"}
 
-# 🔬 Initialize analyzer
 analyzer = NutritionAnalyzer(key)
 
-# 🗂 User database helpers
 def load_users():
     with open(DB_FILE, 'r') as f:
         return json.load(f)
@@ -113,14 +101,12 @@ def save_users(data):
     with open(DB_FILE, 'w') as f:
         json.dump(data, f, indent=4)
 
-# 📊 Nutrition CSV caching helpers
 def load_nutrition_cache():
     cache = {}
     with open(CSV_FILE, 'r', newline='') as f:
         reader = csv.DictReader(f)
         for row in reader:
             food = row['food_item'].lower()
-            # Parse serving quantity as float or int if possible
             try:
                 quantity = float(row['serving_quantity'])
                 if quantity.is_integer():
@@ -128,7 +114,6 @@ def load_nutrition_cache():
             except (ValueError, TypeError):
                 quantity = row['serving_quantity']
 
-            # Parse vitamins_minerals as JSON
             try:
                 vitamins_minerals = json.loads(row['vitamins_minerals_json'])
             except (json.JSONDecodeError, TypeError):
@@ -177,10 +162,7 @@ def append_nutrition_cache(nutri_data):
             vitamins_json_str
         ])
 
-# Load nutrition cache on app start
 nutrition_cache = load_nutrition_cache()
-
-# 📡 Routes
 
 @app.route('/nutrition', methods=['POST'])
 def nutrition():
@@ -191,51 +173,70 @@ def nutrition():
 
     food_key = food_item.lower()
 
-    # Check cache first
     if food_key in nutrition_cache:
         return jsonify(nutrition_cache[food_key])
 
-    # If not in cache, get from Gemini AI
     result = analyzer.get_nutrition_info(food_item)
 
-    # If valid result, check if exact food_item already present by value in cache
     if "error" not in result:
-        # Check if exact food_item string is already present
         food_exists = any(
             existing_data.get("food_item", "").lower() == result.get("food_item", "").lower()
             for existing_data in nutrition_cache.values()
         )
         if not food_exists:
             append_nutrition_cache(result)
-            # Update cache with lowercased key from the result food_item (exact string)
             nutrition_cache[result.get("food_item","").lower()] = result
         else:
-            # Do nothing, data already cached for this food_item string
             pass
 
     return jsonify(result)
 
+@app.route('/kcal_goal', methods=["POST"])
+def kcal_goal():
+    data = request.json
+    required_fields = ['uuid', 'kcal_goal']
+    print(data)
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing fields in request"}), 400
+
+    users = load_users()
+    id = data['uuid']
+
+    users['users'][id]["kcal_goal"] = data['kcal_goal']
+    save_users(users)
+
+    return jsonify({"message": "Success"}), 201
+
 @app.route('/register', methods=['POST'])
 def register_user():
     data = request.json
-    required_fields = ['name', 'password', 'paid', 'kcal_goal']
+    required_fields = ['name', 'email', 'password']
+
+    user_id = str(uuid.uuid4())
 
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing fields in request"}), 400
 
     users = load_users()
-    user_id = str(uuid.uuid4())
+
+    if user_id in users['users']:
+        return jsonify({"error": "User already exists."}), 409
 
     hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
+    for user in users['users']:
+        if data['email'] == users['users'][user]["email"]:
+            return jsonify({"error": "User already exists."}), 409
+
     user_data = {
         "name": data['name'],
+        "email": data['email'],
         "password": hashed_password,
-        "paid": data['paid'],
-        "kcal_goal": data['kcal_goal']
+        "kcal_goal": 0  # Optional: Initialize with 0 or None
     }
 
     users['users'][user_id] = user_data
+    print("Saving Users: \n", users)
     save_users(users)
 
     return jsonify({"message": "User registered successfully!", "user_id": user_id}), 201
@@ -243,27 +244,25 @@ def register_user():
 @app.route('/login', methods=['POST'])
 def login_user():
     data = request.json
-    name = data.get('name')
+    email = data.get('email')
     password = data.get('password')
 
-    if not name or not password:
-        return jsonify({"error": "Name and password required"}), 400
+    if not email or not password:
+        return jsonify({"error": "Send all required fields"}), 400
 
-    users = load_users().get('users', {})
+    users = load_users()
 
-    for user_id, user_data in users.items():
-        if user_data.get("name") == name:
-            stored_hash = user_data.get("password", "").encode('utf-8')
-            if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
-                return jsonify({
-                    "message": "Login successful!",
-                    "user_id": user_id,
-                    "profile": {
-                        "name": user_data["name"],
-                        "paid": user_data["paid"],
-                        "kcal_goal": user_data["kcal_goal"]
-                    }
-                }), 200
+    for user in users['users']:
+        if bcrypt.checkpw(password.encode('utf-8'), users['users'][user]['password'].encode('utf-8')):
+            return jsonify({
+                "message": "Login successful!",
+                "profile": {
+                    "name": data["name"],
+                    "kcal_goal": users['users'][user]["kcal_goal"]
+                },
+                "user_id": user
+            }), 200
+            break
 
     return jsonify({"error": "Invalid name or password"}), 401
 
@@ -271,7 +270,6 @@ def login_user():
 def test():
     return jsonify({"message": "Nutrition API is running successfully!"})
 
-# 🏁 Run public server
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
 
