@@ -1,0 +1,6 @@
+food_item,serving_weight,serving_quantity,calories,protein,carbohydrates,fat,vitamins_minerals_json
+Chicken Biryani,250g,1,450kcal,25g,60g,20g,"{""Vitamin A"": ""100mcg"", ""Vitamin C"": ""10mg"", ""Iron"": ""3mg"", ""Potassium"": ""350mg"", ""other vitamins/minerals"": ""Various, amounts vary depending on ingredients""}"
+Chapati,60g,1,112kcal,3g,24g,1g,"{""Vitamin A"": ""40mcg"", ""Vitamin C"": ""0mg"", ""Iron"": ""1mg"", ""Potassium"": ""30mg"", ""other vitamins/minerals"": ""various trace amounts""}"
+Samosa,70g,1,250kcal,4g,28g,12g,"{""Vitamin A"": ""100mcg"", ""Vitamin C"": ""5mg"", ""Iron"": ""1.5mg"", ""Potassium"": ""100mg"", ""other vitamins/minerals"": ""variable""}"
+Dal Makhni,200g,1,300kcal,15g,35g,12g,"{""Vitamin A"": ""50mcg"", ""Vitamin C"": ""5mg"", ""Iron"": ""3mg"", ""Potassium"": ""250mg"", ""other vitamins/minerals"": ""Various amounts of other vitamins and minerals depending on ingredients""}"
+Aaloo Parantha,150g,1,350kcal,8g,55g,15g,"{""Vitamin A"": ""100mcg"", ""Vitamin C"": ""10mg"", ""Iron"": ""2mg"", ""Potassium"": ""250mg"", ""other vitamins/minerals"": ""Various, amounts vary depending on ingredients""}"
