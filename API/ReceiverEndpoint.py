@@ -1,20 +1,24 @@
 import google.generativeai as genai  # type: ignore
 import json
-from flask import Flask, request, jsonify
-import firebase_admin
-from firebase_admin import credentials, db
 import uuid
+import bcrypt
+from flask import Flask, request, jsonify
+import os
 
 # 🔑 Google Generative API Key
 key = "AIzaSyCCIXPTw5o3qz6cysKrVZS8WdASNZg398M"
 
-# 🔑 Firebase Initialization
-cred = credentials.Certificate("firebase_key.json")  # Replace with your actual path
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://<your-project-id>.firebaseio.com'  # Replace with your project ID
-})
+# 📁 JSON file to act as the database
+DB_FILE = 'server.json'
 
+# 🔧 Ensure file exists
+if not os.path.exists(DB_FILE):
+    with open(DB_FILE, 'w') as f:
+        json.dump({"users": {}}, f)
+
+# 🌱 Flask app
 app = Flask(__name__)
+
 
 class NutritionAnalyzer:
     def __init__(self, apiKey):
@@ -73,8 +77,19 @@ class NutritionAnalyzer:
             return {"error": f"Error getting nutrition information: {str(e)}"}
 
 
-# Initialize Gemini Nutrition Analyzer
+# 🔬 Initialize Gemini Nutrition Analyzer
 analyzer = NutritionAnalyzer(key)
+
+
+def load_users():
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
+
+
+def save_users(data):
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
 
 @app.route('/nutrition', methods=['POST'])
 def nutrition():
@@ -87,33 +102,35 @@ def nutrition():
     result = analyzer.get_nutrition_info(food_item)
     return jsonify(result)
 
+
 @app.route('/register', methods=['POST'])
 def register_user():
-    """Register user and store in Firebase"""
     data = request.json
     required_fields = ['name', 'password', 'paid', 'kcal_goal']
 
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing fields in request"}), 400
 
+    users = load_users()
     user_id = str(uuid.uuid4())
+
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
     user_data = {
         "name": data['name'],
-        "password": data['password'],
+        "password": hashed_password,
         "paid": data['paid'],
         "kcal_goal": data['kcal_goal']
     }
 
-    try:
-        ref = db.reference(f'/users/{user_id}')
-        ref.set(user_data)
-        return jsonify({"message": "User registered successfully!", "user_id": user_id}), 201
-    except Exception as e:
-        return jsonify({"error": f"Failed to register user: {str(e)}"}), 500
-    
+    users['users'][user_id] = user_data
+    save_users(users)
+
+    return jsonify({"message": "User registered successfully!", "user_id": user_id}), 201
+
+
 @app.route('/login', methods=['POST'])
 def login_user():
-    """Authenticate user with name and password"""
     data = request.json
     name = data.get('name')
     password = data.get('password')
@@ -121,12 +138,12 @@ def login_user():
     if not name or not password:
         return jsonify({"error": "Name and password required"}), 400
 
-    try:
-        users_ref = db.reference('/users')
-        users = users_ref.get()
+    users = load_users().get('users', {})
 
-        for user_id, user_data in users.items():
-            if user_data.get("name") == name and user_data.get("password") == password:
+    for user_id, user_data in users.items():
+        if user_data.get("name") == name:
+            stored_hash = user_data.get("password", "").encode('utf-8')
+            if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
                 return jsonify({
                     "message": "Login successful!",
                     "user_id": user_id,
@@ -137,15 +154,13 @@ def login_user():
                     }
                 }), 200
 
-        return jsonify({"error": "Invalid name or password"}), 401
-
-    except Exception as e:
-        return jsonify({"error": f"Login failed: {str(e)}"}), 500
+    return jsonify({"error": "Invalid name or password"}), 401
 
 
 @app.route('/test', methods=['GET'])
 def test():
     return jsonify({"message": "Nutrition API is running successfully!"})
+
 
 if __name__ == "__main__":
     app.run(debug=True)

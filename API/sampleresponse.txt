@@ -1,0 +1,42 @@
+to register 
+
+{
+  "name": "John",
+  "password": "secret",
+  "paid": true,
+  "kcal_goal": 2000
+}
+
+
+database will have
+
+"users": {
+  "uuid1234-abcd-5678-efgh": {
+    "name": "John",
+    "password": "secret",
+    "paid": true,
+    "kcal_goal": 2000
+  }
+}
+
+to login 
+
+{
+  "name": "John",
+  "password": "secret"
+}
+
+response
+
+{
+  "message": "Login successful!",
+  "user_id": "uuid1234-abcd-5678",
+  "profile": {
+    "name": "John",
+    "paid": true,
+    "kcal_goal": 2000
+  }
+}
+
+
+
