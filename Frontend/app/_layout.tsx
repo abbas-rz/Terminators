@@ -1,5 +1,23 @@
 import { Stack } from "expo-router";
+import { StatusBar } from "react-native";
+import { useFonts } from "expo-font";
+import { useEffect } from "react";
 
 export default function RootLayout() {
-  return <Stack />;
+  const [loaded] = useFonts({
+    "Poppins-Bold": require("../assets/fonts/Poppins-Bold.ttf"),
+    Poppins: require("../assets/fonts/Poppins-Regular.ttf"),
+  });
+
+  if (!loaded) {
+    return null;
+  }
+
+  return (
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+
+  )
 }
