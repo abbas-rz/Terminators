@@ -16,6 +16,11 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="q1" options={{ headerShown: false }} />
+      <Stack.Screen name="q2" options={{ headerShown: false }} />
+      <Stack.Screen name="q3" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="Options" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
 
