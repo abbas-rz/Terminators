@@ -237,80 +237,89 @@ nutrition_cache = load_nutrition_cache()
 
 @app.route('/nutrition', methods=['POST'])
 def nutrition():
-    data = request.json
-    food_item = data.get('food_item')
-    weight_grams = data.get('weight')  # Weight in grams
-    
-    if not food_item:
-        return jsonify({"error": "Please provide a food item."}), 400
-
-    # Validate weight if provided
-    if weight_grams is not None:
-        try:
-            weight_grams = float(weight_grams)
-            if weight_grams <= 0:
-                return jsonify({"error": "Weight must be a positive number."}), 400
-        except (ValueError, TypeError):
-            return jsonify({"error": "Weight must be a valid number in grams."}), 400
-
-    food_key = food_item.lower()
-
-    # Check cache first
-    if food_key in nutrition_cache:
-        base_nutrition = nutrition_cache[food_key]
-        
-        # If weight is specified, calculate nutrition for that weight
-        if weight_grams is not None:
-            calculated_nutrition, weight_multiplier = calculate_weight_based_nutrition(base_nutrition, weight_grams)
-            
-            # Update serving size info
-            calculated_nutrition["serving_size"] = {
-                "weight": format_nutrient_value(weight_grams, "g"),
-                "quantity": base_nutrition["serving_size"].get("quantity", 1) * weight_multiplier
-            }
-            
-            calculated_nutrition["weight_info"] = {
-                "requested_weight": f"{weight_grams}g",
-                "base_serving_weight": base_nutrition["serving_size"].get("weight", "100g"),
-                "multiplier": round(weight_multiplier, 2)
-            }
-            
-            return jsonify(calculated_nutrition)
+    data_raw = request.json
+    print("data: ", data_raw, "")
+    data_list = data_raw["mealData"]
+    for data in data_list:
+        food_item = data.get('food_item')
+        if data.get('weight') != "":
+            weight_grams = int(data.get('weight'))  # Weight in grams
         else:
-            return jsonify(base_nutrition)
+            return jsonify({"error": "Weight must be a valid number in grams."}), 400
+            break
+        if data.get(food_item) == "":
+            return jsonify({"error": "Please provide a food item."}), 400
+            break
 
-    # If not in cache, get from Gemini AI
-    result = analyzer.get_nutrition_info(food_item)
-
-    # If valid result, cache it
-    if "error" not in result:
-        food_exists = any(
-            existing_data.get("food_item", "").lower() == result.get("food_item", "").lower()
-            for existing_data in nutrition_cache.values()
-        )
-        if not food_exists:
-            append_nutrition_cache(result)
-            nutrition_cache[result.get("food_item","").lower()] = result
+        print("Recieved Weight: ", weight_grams)
         
-        # If weight is specified, calculate nutrition for that weight
+        # Validate weight if provided
         if weight_grams is not None:
-            calculated_result, weight_multiplier = calculate_weight_based_nutrition(result, weight_grams)
-            
-            # Update serving size info
-            calculated_result["serving_size"] = {
-                "weight": format_nutrient_value(weight_grams, "g"),
-                "quantity": result["serving_size"].get("quantity", 1) * weight_multiplier
-            }
-            
-            calculated_result["weight_info"] = {
-                "requested_weight": f"{weight_grams}g",
-                "base_serving_weight": result["serving_size"].get("weight", "100g"),
-                "multiplier": round(weight_multiplier, 2)
-            }
-            
-            return jsonify(calculated_result)
+            try:
+                weight_grams = float(weight_grams)
+                if weight_grams <= 0:
+                    return jsonify({"error": "Weight must be a positive number."}), 400
+            except (ValueError, TypeError):
+                return jsonify({"error": "Weight must be a valid number in grams."}), 400
 
-    return jsonify(result)
+        food_key = food_item.lower()
+
+        # Check cache first
+        if food_key in nutrition_cache:
+            base_nutrition = nutrition_cache[food_key]
+            
+            # If weight is specified, calculate nutrition for that weight
+            if weight_grams is not None:
+                calculated_nutrition, weight_multiplier = calculate_weight_based_nutrition(base_nutrition, weight_grams)
+                
+                # Update serving size info
+                calculated_nutrition["serving_size"] = {
+                    "weight": format_nutrient_value(weight_grams, "g"),
+                    "quantity": base_nutrition["serving_size"].get("quantity", 1) * weight_multiplier
+                }
+                
+                calculated_nutrition["weight_info"] = {
+                    "requested_weight": f"{weight_grams}g",
+                    "base_serving_weight": base_nutrition["serving_size"].get("weight", "100g"),
+                    "multiplier": round(weight_multiplier, 2)
+                }
+                
+                return jsonify(calculated_nutrition)
+            else:
+                return jsonify(base_nutrition)
+
+        # If not in cache, get from Gemini AI
+        result = analyzer.get_nutrition_info(food_item)
+
+        # If valid result, cache it
+        if "error" not in result:
+            food_exists = any(
+                existing_data.get("food_item", "").lower() == result.get("food_item", "").lower()
+                for existing_data in nutrition_cache.values()
+            )
+            if not food_exists:
+                append_nutrition_cache(result)
+                nutrition_cache[result.get("food_item","").lower()] = result
+            
+            # If weight is specified, calculate nutrition for that weight
+            if weight_grams is not None:
+                calculated_result, weight_multiplier = calculate_weight_based_nutrition(result, weight_grams)
+                
+                # Update serving size info
+                calculated_result["serving_size"] = {
+                    "weight": format_nutrient_value(weight_grams, "g"),
+                    "quantity": result["serving_size"].get("quantity", 1) * weight_multiplier
+                }
+                
+                calculated_result["weight_info"] = {
+                    "requested_weight": f"{weight_grams}g",
+                    "base_serving_weight": result["serving_size"].get("weight", "100g"),
+                    "multiplier": round(weight_multiplier, 2)
+                }
+                
+                return jsonify(calculated_result)
+
+        return jsonify(result)
 
 @app.route('/kcal_goal', methods=["POST"])
 def kcal_goal():
