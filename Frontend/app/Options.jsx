@@ -25,7 +25,7 @@ export default function Options() {
         style={styles.image}
         resizeMode="contain"
       />
-      <TouchableOpacity style={styles.Button} onPress={() => {}}>
+      <TouchableOpacity style={styles.Button} onPress={() => {router.navigate("/calTracker")}}>
         <Text style={styles.buttonText}>{`Calorie Tracker >`}</Text>
       </TouchableOpacity>
     </View>

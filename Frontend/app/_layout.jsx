@@ -20,6 +20,8 @@ export default function RootLayout() {
       <Stack.Screen name="q2" options={{ headerShown: false }} />
       <Stack.Screen name="q3" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="calTracker" options={{ headerShown: false }} />
+      <Stack.Screen name="actCounter" options={{ headerShown: false }} />
       <Stack.Screen name="Options" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
