@@ -12,13 +12,15 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.desical.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.desical.app",
-      "usesCleartextTraffic": true
+      "config": {
+        "usesCleartextTraffic": true
+      }
     },
     "web": {
       "bundler": "metro",
