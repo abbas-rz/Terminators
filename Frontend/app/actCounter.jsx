@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useState, useEffect, useRef } from 'react'
 import BLD_comp from "../components/BLD.jsx"
 import * as FileSystem from 'expo-file-system';
@@ -12,7 +12,7 @@ const actCounter = () => {
     dinner: {}
   });
 
-  const baseURL = "http://192.168.1.4:5000"
+  const baseURL = "http://desicalapi.serveo.net"
 
   const [breakfast, setBreakfast] = useState([{ food_item: "", weight: "" }]);
   const [lunch, setLunch] = useState([{ food_item: "", weight: "" }]);
@@ -183,19 +183,30 @@ const actCounter = () => {
     console.log("Current limit:", limit);
     console.log("Initial limit:", initialLimit);
   };
-   return (
-    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
-      <View style={{flexDirection: "row", marginBottom: 20, justifyContent: "space-between"}}>
-        <Text style={styles.Header}>Calorie Tracker</Text>
-        <Text style={styles.SecondHeader}>Kcal Limit: {limit}</Text>
-      </View>
-      <BLD_comp Title={"Breakfast"} Foods={breakfast} setFoods={setBreakfast} />
-      <BLD_comp Title={"Lunch"} Foods={lunch} setFoods={setLunch} />
-      <BLD_comp Title={"Dinner"} Foods={dinner} setFoods={setDinner} />
-      <TouchableOpacity style={styles.Button} onPress={() => sendData()}>
-          <Text style={styles.buttonText}>{`Calculate >`}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.container}>
+          <View style={{flexDirection: "row", marginBottom: 20, justifyContent: "space-between", marginTop: 40}}>
+            <Text style={styles.Header}>Calorie Tracker</Text>
+            {
+              limit >= 0 ? (
+                <Text style={styles.SecondHeader}>Kcal Limit: {limit}</Text>
+              ) : (
+                <Text style={styles.OopsHeader}>Kcal Limit: {limit}</Text>
+              )
+            }
+          </View>
+          <BLD_comp Title={"Breakfast"} Foods={breakfast} setFoods={setBreakfast} />
+          <BLD_comp Title={"Lunch"} Foods={lunch} setFoods={setLunch} />
+          <BLD_comp Title={"Dinner"} Foods={dinner} setFoods={setDinner} />
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -205,11 +216,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   container: {
-    flexGrow: 1.2,
-    justifyContent: 'center',
+    flexGrow: 1,
     backgroundColor: "#fff",
     padding: 20,
-    paddingBottom: 40
+    paddingBottom: 10
   },
   Header: {
     fontSize: 38,
@@ -224,7 +234,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 64,
     fontFamily: "PoppinsBold",
-    color: "#aaa",
+    color: "#069F39",
+    width: "45%",
+    textAlign: "right",
+    lineHeight: 49
+  },
+  OopsHeader: {
+    fontSize: 30,
+    textAlign: "center",
+    lineHeight: 64,
+    fontFamily: "PoppinsBold",
+    color: "#fe3030",
     width: "45%",
     textAlign: "right",
     lineHeight: 49

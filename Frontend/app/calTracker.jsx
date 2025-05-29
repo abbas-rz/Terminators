@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 const fileUri2 = FileSystem.documentDirectory + 'auth_conf_for_DESICAL.txt';
 const fileUri = FileSystem.documentDirectory + 'uuid_for_DESICAL.txt';
 const fileUri3 = FileSystem.documentDirectory + 'kcalGoal.txt'
-const BASE_URL = "http://192.168.1.4:5000"
+const BASE_URL = "http://desicalapi.serveo.net"
 
 export default function calTracker() {
   const [kcal_goal, setKcalG] = useState(0)

@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.desical.app"
     },
     "web": {
       "bundler": "metro",
@@ -34,17 +35,15 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/PassionOne-Regular.ttf",
-          ]
-        }
-      ],
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b51a1707-90f6-43bb-bcd8-7a7487bea45b"
+      }
     }
   }
 }
