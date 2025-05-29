@@ -9,9 +9,7 @@ const fileUri = FileSystem.documentDirectory + 'auth_conf_for_DESICAL.txt';
 
 export default function Index() {
 
-  const deleteFile = async () => {
-    const fileUri = FileSystem.documentDirectory + 'data.txt';
-
+  const deleteFile = async (fileUri) => {
     try {
       // Check if the file exists before deleting
       const fileInfo = await FileSystem.getInfoAsync(fileUri);
@@ -64,7 +62,6 @@ export default function Index() {
  // };
 
   useEffect(() => {
-    deleteFile()
     setTimeout(() => {
       bottle()
     }, 100)
